@@ -181,11 +181,13 @@ class Input extends Generic {
      * Whether the input is valid or not.
      *
      * @access  public
-     * @param   bool   $revalid    Re-valid or not.
-     * @param   mixed  $value      Value to test.
+     * @param   bool   $revalid           Re-valid or not.
+     * @param   mixed  $value             Value to test.
+     * @param   bool   $postValidation    Run postvalidation or not.
      * @return  bool
      */
-    public function isValid ( $revalid = false, &$value ) {
+    public function isValid ( $revalid = false, &$value,
+                              $postValidation = true ) {
 
         if(false === $revalid && null !== $this->_validity)
             return $this->_validity;
@@ -198,6 +200,9 @@ class Input extends Generic {
 
             $this->_validity = false;
 
+            if(false === $postValidation)
+                return $this->_validity;
+
             return Form::postValidation($this->_validity, $value, $this);
         }
 
@@ -205,6 +210,9 @@ class Input extends Generic {
            || false !== strpos($value, "\r")) {
 
             $this->_validity = false;
+
+            if(false === $postValidation)
+                return $this->_validity;
 
             return Form::postValidation($this->_validity, $value, $this);
         }
@@ -216,6 +224,9 @@ class Input extends Generic {
             if(0 == @preg_match('#^' . $pattern . '$#u', $value, $_)) {
 
                 $this->_validity = false;
+
+                if(false === $postValidation)
+                    return $this->_validity;
 
                 return Form::postValidation($this->_validity, $value, $this);
             }
@@ -229,6 +240,9 @@ class Input extends Generic {
 
                 $this->_validity = false;
 
+                if(false === $postValidation)
+                    return $this->_validity;
+
                 return Form::postValidation($this->_validity, $value, $this);
             }
         }
@@ -236,6 +250,9 @@ class Input extends Generic {
         if(true === $this->attributeExists('readonly')) {
 
             $this->_validity = $value === $this->readAttribute('value');
+
+            if(false === $postValidation)
+                return $this->_validity;
 
             return Form::postValidation($this->_validity, $value, $this);
         }
@@ -376,6 +393,9 @@ class Input extends Generic {
                 $this->_validity = true;
         }
 
+        if(false === $postValidation)
+            return $this->_validity;
+
         return Form::postValidation($this->_validity, $value, $this);
     }
 
@@ -426,6 +446,17 @@ class Input extends Generic {
             return false;
 
         return $step;
+    }
+
+    /**
+     * Get validity.
+     *
+     * @access  public
+     * @return  bool
+     */
+    public function getValidity ( ) {
+
+        return $this->_validity;
     }
 }
 

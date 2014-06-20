@@ -355,13 +355,29 @@ class Form extends Generic implements \Hoa\Xyl\Element\Executable {
 
                     foreach($names[$index] as $element) {
 
-                        $handle = $element->isValid($revalid, $datum);
+                        $postValidation = !(   ($element instanceof Input)
+                                            && ('radio' === strtolower($element->readAttribute('type'))));
+                        $handle = $element->isValid($revalid, $datum, $postValidation);
 
                         if(true === $handle)
                             $element->setValue($datum);
 
                         $validation[$index] = $validation[$index] || $handle;
                     }
+
+                    if(false === $validation[$index])
+                        foreach($names[$index] as $element) {
+
+                            $postValidation = !(   ($element instanceof Input)
+                                                && ('radio' === strtolower($element->readAttribute('type'))));
+
+                            if(false === $postValidation)
+                                static::postValidation(
+                                    $element->getValidity(),
+                                    $datum,
+                                    $element
+                                );
+                        }
 
                     unset($names[$index]);
                     unset($flat[$index]);
@@ -407,12 +423,12 @@ class Form extends Generic implements \Hoa\Xyl\Element\Executable {
             */
         }
 
-        foreach($names as $name => $element)
-            foreach($element as $el)
-                if((   $el instanceof Input
-                    || $el instanceof Textarea
-                    || $el instanceof Select)
-                   && true === $el->attributeExists('required'))
+        foreach($names as $name => $elements)
+            foreach($elements as $element)
+                if((   $element instanceof Input
+                    || $element instanceof Textarea
+                    || $element instanceof Select)
+                   && true === $element->attributeExists('required'))
                     $validation[$name] = false;
 
         $handle = &$this->_validity;
