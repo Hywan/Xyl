@@ -46,7 +46,12 @@ from('Hoa')
 /**
  * \Hoa\Xml\Element\Model\Phrasing
  */
--> import('Xml.Element.Model.Phrasing');
+-> import('Xml.Element.Model.Phrasing')
+
+/**
+ * \Hoa\Stringbuffer\ReadWrite
+ */
+-> import('Stringbuffer.ReadWrite');
 
 }
 
@@ -72,6 +77,7 @@ class          Value
      * @var \Hoa\Xyl\Interpreter\Common\Value array
      */
     protected static $_attributes = array(
+        'of'        => self::ATTRIBUTE_TYPE_NORMAL,
         'link'      => self::ATTRIBUTE_TYPE_LINK,
         'formatter' => self::ATTRIBUTE_TYPE_CUSTOM
     );
@@ -87,7 +93,39 @@ class          Value
      */
     public function paint ( \Hoa\Stream\IStream\Out $out ) {
 
-        $value = $this->computeValue();
+        if(true === $this->abstract->attributeExists('of')) {
+
+            $attributes = $this->abstract->readAttributes();
+            unset($attributes['of']);
+
+            switch($this->abstract->readAttribute('of')) {
+
+                case 'attribute-names':
+                    $output = array_keys($attributes);
+                  break;
+
+                case 'attribute-values':
+                default:
+                    $output = array_values($attributes);
+                  break;
+            }
+
+            if(1 === count($output))
+                $out->writeAll($output[0]);
+            elseif(1 <= count($output))
+                $out->writeArray($output);
+
+            return;
+        }
+
+        if(0 < count($this)) {
+
+            $buffer = new \Hoa\Stringbuffer\ReadWrite();
+            $this->computeValue($buffer);
+            $value = $buffer->readAll();
+        }
+        else
+            $value = $this->computeValue();
 
         if(true === $this->abstract->attributeExists('formatter'))
             $value = $this->formatValue(empty($value) ? null : $value);
